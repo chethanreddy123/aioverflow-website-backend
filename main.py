@@ -3,8 +3,18 @@ from fastapi import FastAPI, HTTPException, Body
 from pydantic import BaseModel
 import smtplib
 from email.mime.text import MIMEText
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class ConsultationRequest(BaseModel):
     name: str
@@ -43,15 +53,19 @@ def send_email(sender_email, sender_password, recipient_email, cc_emails, subjec
     except Exception as e:
         print(f"Failed to send email. Error: {e}")
 
+@app.get("/healthcheck/")
+def healthcheck():
+    return {"message": "AIOverflow API is up and running!"}
+
 @app.post("/request_consultation/")
-async def request_consultation(consultation_request: ConsultationRequest = Body(...)):
+def request_consultation(consultation_request: ConsultationRequest = Body(...)):
     sender_email = "aioverflow.ml@gmail.com"  # Replace with your email address
     sender_password = "iyfngcdhgfcbkufv"  # Replace with your email password
 
     recipient_email = consultation_request.email
     cc_emails = ["achethanreddy1921@gmail.com", "subhanu12@gmail.com"]
     subject = "Request for Free Consultation"
-    message = f"Dear {consultation_request.name},\n\nThank you for your interest in our consultation service. We will reach out to you soon regarding your project.\n\nBest regards,\nYour Team"
+    message = f"Dear {consultation_request.name},\n\nThank you for your interest in our consultation service. We will reach out to you soon regarding your project.\n\nBest regards,\nTeam AIOverflow"
 
     try:
         # Verify the email address
