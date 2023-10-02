@@ -4,6 +4,12 @@ from pydantic import BaseModel
 import smtplib
 from email.mime.text import MIMEText
 from fastapi.middleware.cors import CORSMiddleware
+from pymongo.mongo_client import MongoClient
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 app = FastAPI()
 origins = ["*"]
@@ -15,11 +21,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+Key_Mongo_Cloud = os.environ.get("MONGO_KEY")
+MessageData = MongoClient(Key_Mongo_Cloud)['AIOverflow-Website']['ConsultationRequests']
 
 class ConsultationRequest(BaseModel):
     name: str
     email: str
     message: str
+    option: str
 
 def is_valid_email(email):
     # Define a regular expression pattern for basic email validation
@@ -60,7 +69,9 @@ def healthcheck():
 @app.post("/request_consultation/")
 def request_consultation(consultation_request: ConsultationRequest = Body(...)):
     sender_email = "aioverflow.ml@gmail.com"  # Replace with your email address
-    sender_password = "iyfngcdhgfcbkufv"  # Replace with your email password
+    sender_password =  os.environ.get("SENDER_PASSWORD")  # Replace with your email password
+
+    MessageData.insert_one(consultation_request.dict())
 
     recipient_email = consultation_request.email
     cc_emails = ["achethanreddy1921@gmail.com", "subhanu12@gmail.com"]
